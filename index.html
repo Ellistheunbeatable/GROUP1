@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .attendance-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .attendance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        .status-present {
+            background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
+        }
+        .status-absent {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl mx-auto">
+        <div class="attendance-card bg-white rounded-xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Class Attendance System</h1>
+                <p class="text-gray-600">Track and manage student attendance with ease</p>
+            </div>
+
+            <div id="setup-phase" class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="class-name" class="block text-sm font-medium text-gray-700 mb-2">Class Name</label>
+                        <input type="text" id="class-name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter class name">
+                    </div>
+                    <div>
+                        <label for="student-count" class="block text-sm font-medium text-gray-700 mb-2">Number of Students</label>
+                        <input type="number" id="student-count" min="1" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter number of students">
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button id="start-attendance" class="btn-primary text-white px-6 py-3 rounded-lg font-medium flex items-center">
+                        Start Attendance
+                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="attendance-phase" class="hidden space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="class-title" class="text-2xl font-bold text-gray-800">Class Attendance</h2>
+                    <div class="flex space-x-2">
+                        <span id="student-counter" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">0/0</span>
+                        <button id="reset-attendance" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="student-name" class="block text-sm font-medium text-gray-700 mb-2">Student Name</label>
+                        <input type="text" id="student-name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter student name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Attendance Status</label>
+                        <div class="flex space-x-4">
+                            <button id="mark-present" class="flex-1 status-present text-gray-800 px-4 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                                Present
+                            </button>
+                            <button id="mark-absent" class="flex-1 status-absent text-gray-800 px-4 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                                Absent
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-medium text-gray-700 mb-3">Attendance List</h3>
+                    <div id="attendance-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Attendance items will be added here -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <button id="complete-attendance" class="btn-primary text-white px-6 py-3 rounded-lg font-medium">
+                        Complete Attendance
+                    </button>
+                </div>
+            </div>
+
+            <div id="results-phase" class="hidden">
+                <div class="text-center mb-8">
+                    <h2 id="results-title" class="text-2xl font-bold text-gray-800 mb-2">Attendance Results</h2>
+                    <p id="results-subtitle" class="text-gray-600">Summary for your class session</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="chart-container p-6">
+                        <canvas id="attendance-chart"></canvas>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="status-present text-white p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm opacity-90">Present Students</p>
+                                    <p id="present-count" class="text-3xl font-bold">0</p>
+                                </div>
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="status-absent text-white p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm opacity-90">Absent Students</p>
+                                    <p id="absent-count" class="text-3xl font-bold">0</p>
+                                </div>
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Total Students</p>
+                                    <p id="total-count" class="text-2xl font-bold text-gray-800">0</p>
+                                </div>
+                                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <button id="new-session" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                        New Session
+                    </button>
+                    <button id="export-results" class="btn-primary text-white px-6 py-3 rounded-lg font-medium flex items-center">
+                        Export Results
+                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const setupPhase = document.getElementById('setup-phase');
+            const attendancePhase = document.getElementById('attendance-phase');
+            const resultsPhase = document.getElementById('results-phase');
+
+            const startAttendanceBtn = document.getElementById('start-attendance');
+            const resetAttendanceBtn = document.getElementById('reset-attendance');
+            const completeAttendanceBtn = document.getElementById('complete-attendance');
+            const newSessionBtn = document.getElementById('new-session');
+            const exportResultsBtn = document.getElementById('export-results');
+
+            const classNameInput = document.getElementById('class-name');
+            const studentCountInput = document.getElementById('student-count');
+            const studentNameInput = document.getElementById('student-name');
+            const markPresentBtn = document.getElementById('mark-present');
+            const markAbsentBtn = document.getElementById('mark-absent');
+
+            const classTitle = document.getElementById('class-title');
+            const resultsTitle = document.getElementById('results-title');
+            const resultsSubtitle = document.getElementById('results-subtitle');
+            const studentCounter = document.getElementById('student-counter');
+            const attendanceList = document.getElementById('attendance-list');
+
+            const presentCount = document.getElementById('present-count');
+            const absentCount = document.getElementById('absent-count');
+            const totalCount = document.getElementById('total-count');
+
+            // State variables
+            let attendanceData = [];
+            let currentStudentIndex = 0;
+            let totalStudents = 0;
+            let presentStudents = 0;
+            let absentStudents = 0;
+            let chartInstance = null;
+
+            // Initialize the system
+            function initSystem() {
+                setupPhase.classList.remove('hidden');
+                attendancePhase.classList.add('hidden');
+                resultsPhase.classList.add('hidden');
+
+                classNameInput.value = '';
+                studentCountInput.value = '';
+                studentNameInput.value = '';
+                attendanceData = [];
+                currentStudentIndex = 0;
+                presentStudents = 0;
+                absentStudents = 0;
+            }
+
+            // Start attendance process
+            startAttendanceBtn.addEventListener('click', function() {
+                const className = classNameInput.value.trim();
+                const studentCount = parseInt(studentCountInput.value);
+
+                if (!className) {
+                    showToast('Please enter a class name', 'error');
+                    return;
+                }
+
+                if (isNaN(studentCount) || studentCount <= 0) {
+                    showToast('Please enter a valid number of students', 'error');
+                    return;
+                }
+
+                setupPhase.classList.add('hidden');
+                attendancePhase.classList.remove('hidden');
+                resultsPhase.classList.add('hidden');
+
+                classTitle.textContent = `${className} Attendance`;
+                totalStudents = studentCount;
+                updateStudentCounter();
+                studentNameInput.focus();
+            });
+
+            // Reset attendance
+            resetAttendanceBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset the attendance? All data will be lost.')) {
+                    initSystem();
+                }
+            });
+
+            // Mark student as present
+            markPresentBtn.addEventListener('click', function() {
+                markAttendance('Present');
+            });
+
+            // Mark student as absent
+            markAbsentBtn.addEventListener('click', function() {
+                markAttendance('Absent');
+            });
+
+            // Handle attendance marking
+            function markAttendance(status) {
+                const studentName = studentNameInput.value.trim();
+
+                if (!studentName) {
+                    showToast('Please enter a student name', 'error');
+                    return;
+                }
+
+                if (currentStudentIndex >= totalStudents) {
+                    showToast('All students have been marked', 'info');
+                    return;
+                }
+
+                // Check if student already exists
+                const existingIndex = attendanceData.findIndex(item => item.name.toLowerCase() === studentName.toLowerCase());
+
+                if (existingIndex !== -1) {
+                    // Update existing record
+                    const oldStatus = attendanceData[existingIndex].status;
+                    attendanceData[existingIndex].status = status;
+
+                    if (oldStatus === 'Present' && status === 'Absent') {
+                        presentStudents--;
+                        absentStudents++;
+                    } else if (oldStatus === 'Absent' && status === 'Present') {
+                        absentStudents--;
+                        presentStudents++;
+                    }
+
+                    updateAttendanceList();
+                    showToast(`Updated ${studentName}'s attendance to ${status}`, 'success');
+                } else {
+                    // Add new record
+                    attendanceData.push({
+                        name: studentName,
+                        status: status,
+                        time: new Date().toLocaleTimeString()
+                    });
+
+                    if (status === 'Present') {
+                        presentStudents++;
+                    } else {
+                        absentStudents++;
+                    }
+
+                    currentStudentIndex++;
+                    updateAttendanceList();
+                    showToast(`Marked ${studentName} as ${status}`, 'success');
+                }
+
+                studentNameInput.value = '';
+                updateStudentCounter();
+                studentNameInput.focus();
+
+                if (currentStudentIndex >= totalStudents) {
+                    completeAttendanceBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    completeAttendanceBtn.disabled = false;
+                }
+            }
+
+            // Update student counter display
+            function updateStudentCounter() {
+                studentCounter.textContent = `${currentStudentIndex}/${totalStudents}`;
+            }
+
+            // Update attendance list display
+            function updateAttendanceList() {
+                attendanceList.innerHTML = '';
+
+                attendanceData.forEach((student, index) => {
+                    const item = document.createElement('div');
+                    item.className = `flex items-center justify-between p-3 rounded-lg ${student.status === 'Present' ? 'bg-green-50' : 'bg-red-50'}`;
+
+                    item.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="font-medium text-gray-800">${student.name}</span>
+                            <span class="ml-2 text-xs ${student.status === 'Present' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} px-2 py-1 rounded-full">${student.status}</span>
+                        </div>
+                        <span class="text-xs text-gray-500">${student.time}</span>
+                    `;
+
+                    attendanceList.appendChild(item);
+                });
+            }
+
+            // Complete attendance
+            completeAttendanceBtn.addEventListener('click', function() {
+                if (currentStudentIndex < totalStudents) {
+                    if (!confirm(`You haven't marked all students. ${totalStudents - currentStudentIndex} students are still unmarked. Do you want to complete anyway?`)) {
+                        return;
+                    }
+                }
+
+                attendancePhase.classList.add('hidden');
+                resultsPhase.classList.remove('hidden');
+
+                resultsTitle.textContent = `${classTitle.textContent} - Results`;
+                resultsSubtitle.textContent = `Attendance summary for ${totalStudents} students`;
+
+                presentCount.textContent = presentStudents;
+                absentCount.textContent = absentStudents;
+                totalCount.textContent = totalStudents;
+
+                renderChart();
+            });
+
+            // Start new session
+            newSessionBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to start a new session? All current data will be lost.')) {
+                    initSystem();
+                }
+            });
+
+            // Export results
+            exportResultsBtn.addEventListener('click', function() {
+                const data = {
+                    className: classTitle.textContent.replace(' Attendance', ''),
+                    totalStudents: totalStudents,
+                    presentStudents: presentStudents,
+                    absentStudents: absentStudents,
+                    attendanceData: attendanceData,
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString()
+                };
+
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+                const exportFileDefaultName = `attendance-${data.date.replace(/\//g, '-')}.json`;
+
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            });
+
+            // Render attendance chart
+            function renderChart() {
+                const ctx = document.getElementById('attendance-chart').getContext('2d');
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Present', 'Absent'],
+                        datasets: [{
+                            data: [presentStudents, absentStudents],
+                            backgroundColor: [
+                                'rgba(72, 187, 120, 0.7)',
+                                'rgba(248, 113, 113, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(72, 187, 120, 1)',
+                                'rgba(248, 113, 113, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#4b5563',
+                                    font: {
+                                        family: 'Inter',
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((value / total) * 100);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+            }
+
+            // Show toast notification
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white text-sm font-medium ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
+                toast.textContent = message;
+
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                }, 3000);
+            }
+
+            // Initialize the system
+            initSystem();
+
+            // Allow pressing Enter to mark attendance
+            studentNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    markAttendance('Present');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
